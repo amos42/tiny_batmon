@@ -9,4 +9,3 @@ https://github.com/datacute/Tiny4kOLED
 
 ## dependency
   * Wire (default)
-  * adafruit/TinyWireM

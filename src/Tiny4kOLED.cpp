@@ -8,8 +8,8 @@
 
 // ----------------------------------------------------------------------------
 
-#include "Tiny4kOLED_common.h"
 #include "Tiny4kOLED.h"
+#include <Wire.h>
 
 #define SSD1306_PAGES 4
 
@@ -48,25 +48,25 @@ static const DCfont *oledFont = 0;
 static uint8_t oledX = 0, oledY = 0;
 static uint8_t renderingFrame = 0xB0, drawingFrame = 0x40;
 
-static void (*wireBeginFn)(void);
-static void (*wireBeginTransmissionFn)(uint8_t i2c_address);
-static bool (*wireWriteFn)(uint8_t byte);
-static void (*wireEndTransmissionFn)(void);
+// static void (*wireBeginFn)(void);
+// static void (*wireBeginTransmissionFn)(uint8_t i2c_address);
+// static bool (*wireWriteFn)(uint8_t byte);
+// static void (*wireEndTransmissionFn)(void);
 
 static inline void ssd1306_begin(void) {
-	wireBeginFn();
+	Wire.begin();
 }
 
 static inline void ssd1306_send_start(uint8_t ssd1306_i2c_address) {
-	wireBeginTransmissionFn(ssd1306_i2c_address);
+	Wire.beginTransmission(ssd1306_i2c_address);
 }
 
 static inline bool ssd1306_send_byte(uint8_t byte) {
-	return wireWriteFn(byte);
+	return Wire.write(byte);
 }
 
 static inline void ssd1306_send_stop(void) {
-	wireEndTransmissionFn();
+	Wire.endTransmission();
 }
 
 static void ssd1306_send_command_start(void) {
@@ -151,12 +151,8 @@ void SSD1306Device::sendStop(void) {
 	::ssd1306_send_stop();
 }
 
-SSD1306Device::SSD1306Device(uint8_t ssd1306_i2c_address, void (*wireBeginFunc)(void), void (*wireBeginTransmissionFunc)(uint8_t ssd1306_i2c_address), bool (*wireWriteFunc)(uint8_t byte), void (*wireEndTransmissionFunc)(void)) {
+SSD1306Device::SSD1306Device(uint8_t ssd1306_i2c_address) {
 	i2c_address = ssd1306_i2c_address;
-	wireBeginFn = wireBeginFunc;
-	wireBeginTransmissionFn = wireBeginTransmissionFunc;
-	wireWriteFn = wireWriteFunc;
-	wireEndTransmissionFn = wireEndTransmissionFunc;
 }
 
 void SSD1306Device::begin(void) {
@@ -262,6 +258,16 @@ size_t SSD1306Device::write(byte c) {
 	}
 	while (--line);
 	return 1;
+}
+
+size_t SSD1306Device::print(const char *str) {
+	int idx = 0;
+	char c;
+	while ((c = *str++) != '\0') {
+		write((byte)c);
+		idx++;
+	}
+	return idx;
 }
 
 void SSD1306Device::bitmap(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const uint8_t bitmap[]) {
